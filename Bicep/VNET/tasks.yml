@@ -1,0 +1,40 @@
+# Azure DevOps YAML for deploying a VNet with subnets, NSGs, and route tables
+
+trigger:
+  branches:
+    include:
+      - main # Trigger pipeline on changes to the main branch
+  paths:
+    include:
+      - 'Azure/Vnets/*' # Only trigger when files in this path are changed
+
+pool:
+  vmImage: 'ubuntu-latest' # Use the latest Ubuntu image for the pipeline
+
+variables:
+  azureServiceConnection: 'AzureVnetConnection' # Azure service connection configured in Azure DevOps
+  environment: 'prod' # Environment where the VNet will be deployed
+  project: 'Azure VNet Deployment' # Project name for identification
+  owner: 'Said Aazani' # Project owner
+  createdBy: 'Azure DevOps Pipeline' # Metadata for tracking the deployment source
+  location: 'westeurope' # Location for VNet deployment
+  resourceGroupName: 'vnet-deployment-rg' # Resource group for VNet
+
+stages:
+- stage: DeployVnet
+  displayName: 'Deploy Azure VNet with Subnets'
+  jobs:
+  - job: Deploy
+    displayName: 'Deploy VNet and Subnets'
+    steps:
+    - task: AzureCLI@2 # Using Azure CLI to execute deployment
+      inputs:
+        azureSubscription: $(azureServiceConnection) # Uses the defined Azure service connection
+        scriptType: 'bash' # Run a Bash script
+        scriptLocation: 'inlineScript' # Directly include the script in YAML
+        inlineScript: |
+          # Deploy VNet with Subnets, NSGs, and Route Tables
+          az deployment group create \
+            --resource-group $(resourceGroupName) \
+            --location $(location) \
+            --template-file 'Azure/Vnets/vnet-with-subnets.bicep' # Path to the Bicep template
