@@ -1,0 +1,36 @@
+# GitHub Actions YAML for deploying Azure Management Groups
+
+trigger:
+  branches:
+    include:
+      - main # Trigger pipeline on changes to the main branch
+  paths:
+    include:
+      - 'Azure/ManagementGroups/*' # Only trigger when files in this path are changed
+
+pool:
+  vmImage: 'ubuntu-latest' # Use the latest Ubuntu image for the pipeline
+
+variables:
+  azureServiceConnection: 'ManagementGroupConnection' # Azure service connection configured in service connections in Azure DevOps
+  project: 'Azure Management Group Deployment' # Project name for identification
+  owner: 'Said Aazani' # Project owner
+  location: 'westeurope' # Location required for tenant-level deployments
+
+stages:
+- stage: DeployManagementGroups
+  displayName: 'Deploy Azure Management Groups'
+  jobs:
+  - job: Deploy
+    displayName: 'Deploy Management Groups'
+    steps:
+    - task: AzureCLI@2 # Using Azure CLI to execute deployment
+      inputs:
+        azureSubscription: $(azureServiceConnection) # Uses the defined Azure service connection
+        scriptType: 'bash' # Run a Bash script
+        scriptLocation: 'inlineScript' # Directly include the script in YAML
+        inlineScript: |
+          # Deploy management groups at tenant level
+          az deployment tenant create \
+            --location $(location) \
+            --template-file 'Azure/ManagementGroups/template.bicep' # Path to the Bicep template
