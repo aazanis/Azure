@@ -1,0 +1,39 @@
+# Azure DevOps YAML for deploying Azure Firewall
+
+trigger:
+  branches:
+    include:
+      - main # Trigger pipeline on changes to the main branch
+  paths:
+    include:
+      - 'Azure/Firewalls/*' # Only trigger when files in this path are changed
+
+pool:
+  vmImage: 'ubuntu-latest' # Use the latest Ubuntu image for the pipeline
+
+variables:
+  azureServiceConnection: 'AzureFirewallConnection' # Azure service connection configured in Azure DevOps
+  environment: 'prod' # Environment where the firewall will be deployed
+  project: 'Azure Firewall Deployment' # Project name for identification
+  owner: 'Said Aazani' # Project owner
+  createdBy: 'Azure DevOps Pipeline' # Metadata for tracking the deployment source
+  location: 'westeurope' # Location for firewall deployment
+
+stages:
+- stage: DeployAzureFirewall
+  displayName: 'Deploy Azure Firewall'
+  jobs:
+  - job: Deploy
+    displayName: 'Deploy Azure Firewall'
+    steps:
+    - task: AzureCLI@2 # Using Azure CLI to execute deployment
+      inputs:
+        azureSubscription: $(azureServiceConnection) # Uses the defined Azure service connection
+        scriptType: 'bash' # Run a Bash script
+        scriptLocation: 'inlineScript' # Directly include the script in YAML
+        inlineScript: |
+          # Deploy Azure Firewall in the specified resource group
+          az deployment group create \
+            --resource-group $(resourceGroupName) \
+            --location $(location) \
+            --template-file 'Azure/Firewalls/template.bicep' # Path to the Bicep template
